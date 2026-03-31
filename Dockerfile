@@ -30,15 +30,20 @@ COPY backend/store_utils.py /app/backend/
 
 # Copy other files
 COPY set_state.py /app/
-COPY state.json /app/
 COPY runtime-config.sample.json /app/runtime-config.json
 COPY assets /app/assets
 
 # Install Python deps
 RUN pip install --no-cache-dir flask flask-cors
 
-# Create state file
+# Create state file (runtime)
 RUN echo '{"state":"idle","detail":"待命中","progress":0}' > /app/state.json
+
+# Create agents state file
+RUN echo '{}' > /app/agents-state.json
+
+# Create join-keys file
+RUN echo '{}' > /app/join-keys.json
 
 # Expose port
 EXPOSE 19000
