@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.github
+
+# Dev files
+*.md
+!README*.md
+.env
+.env.*
+
+# Node/npm
+node_modules
+package-lock.json
+npm-debug.log
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv/
+.pytest_cache
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (we rebuild in docker)
+dist/
+build/
+
+# Temporary
+*.log
+tmp/
+temp/

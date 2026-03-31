@@ -1,0 +1,91 @@
+name: Sync & Docker Build
+
+on:
+  schedule:
+    # 每天 UTC 0点（北京时间 8点）检查更新
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/ringhyacinth/Star-Office-UI.git || true
+          git fetch upstream
+
+      - name: Check for updates
+        id: check
+        run: |
+          # 比较 master 和 upstream/master
+         behind=$(git rev-list --count origin/master..upstream/master)
+          echo "behind=$behind" >> $GITHUB_OUTPUT
+          if [ "$behind" -gt 0 ]; then
+            echo "有新更新: $behind 个 commits"
+          else
+            echo "没有新更新"
+          fi
+
+      - name: Merge upstream
+        if: steps.check.outputs.behind != '0'
+        run: |
+          git checkout master
+          git merge upstream/master --no-edit
+          # 解决冲突用 theirs 策略（简单粗暴）
+          # 如果有冲突自动用上游版本
+          git checkout --theirs .
+          git add -A
+          git commit -m "Merge upstream updates" || true
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.behind != '0'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: steps.check.outputs.behind != '0'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        if: steps.check.outputs.behind != '0'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        if: steps.check.outputs.behind != '0'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ meta.outputs.tags }}
+          labels: ${{ meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Commit and push
+        if: steps.check.outputs.behind != '0'
+        run: |
+          git push origin master

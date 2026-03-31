@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  star-office:
+    build: .
+    ports:
+      - "19000:19000"
+    environment:
+      - STAR_OFFICE_ENV=production
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-changeme}
+      - ASSET_DRAWER_PASS=${ASSET_DRAWER_PASSWORD:-1234}
+      - STAR_BACKEND_PORT=19000
+    volumes:
+      - ./state.json:/app/state.json:ro
+      - ./runtime-config.json:/app/runtime-config.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19000/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
