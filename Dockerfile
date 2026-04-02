@@ -1,52 +1,53 @@
-# Build stage
-FROM node:22-alpine AS builder
+# 阶段1: 构建前端
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY pyproject.toml ./
-COPY frontend ./frontend
+# 克隆仓库
+RUN git clone https://github.com/Max5en/Star-Office-UI.git . --depth 1
 
-# Build frontend
 WORKDIR /app/frontend
+
 RUN npm install && npm run build
 
-# Final stage
+# 阶段2: Python + Nginx 运行
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# 安装 nginx 和 curl
+RUN apt-get update && apt-get install -y nginx curl && rm -rf /var/lib/apt/lists/*
 
-# Copy backend files
-COPY backend/app.py /app/backend/
-COPY backend/security_utils.py /app/backend/
-COPY backend/memo_utils.py /app/backend/
-COPY backend/store_utils.py /app/backend/
-
-# Copy other files
-COPY set_state.py /app/
-COPY runtime-config.sample.json /app/runtime-config.json
-COPY assets /app/assets
-
-# Install Python deps
+# 安装 Python 依赖
 RUN pip install --no-cache-dir flask flask-cors
 
-# Create state file (runtime)
-RUN echo '{"state":"idle","detail":"待命中","progress":0}' > /app/state.json
+# 复制后端文件
+COPY --from=builder /app/backend/app.py /app/backend/
+COPY --from=builder /app/backend/*.py /app/backend/
+COPY --from=builder /app/set_state.py /app/
+COPY --from=builder /app/state.json /app/
+COPY --from=builder /app/runtime-config.sample.json /app/runtime-config.json
+COPY --from=builder /app/assets /app/assets
+COPY --from=builder /app/frontend/dist /app/static/
 
-# Create agents state file
-RUN echo '{}' > /app/agents-state.json
+# 初始化状态文件
+RUN echo '{"state":"idle","detail":"待命中","progress":0}' > /app/state.json && \
+    echo '{}' > /app/agents-state.json && \
+    echo '{}' > /app/join-keys.json
 
-# Create join-keys file
-RUN echo '{}' > /app/join-keys.json
+# 创建 .env 文件
+RUN echo "ASSET_DRAWER_PASS=1234" > /app/.env
 
-# Expose port
-EXPOSE 19000
+# Nginx 配置
+RUN echo 'server { listen 80; server_name localhost; root /app/static; index index.html; \
+    location / { try_files $uri $uri/ /index.html; } \
+    location /api/ { proxy_pass http://127.0.0.1:19000; proxy_set_header Host $host; } \
+    location /set_state { proxy_pass http://127.0.0.1:19000; } \
+    location /status { proxy_pass http://127.0.0.1:19000; } \
+    location /agents { proxy_pass http://127.0.0.1:19000; } \
+}' > /etc/nginx/conf.d/star.conf
 
-# Start backend + nginx
+EXPOSE 19000 80
+
+# 启动 Flask 后端 + Nginx
 CMD sh -c "python3 /app/backend/app.py & nginx -g 'daemon off;'"
