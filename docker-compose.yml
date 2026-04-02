@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   star-office-ui:
-    image: star-office-ui:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: star-office-ui
     restart: unless-stopped
     ports:
@@ -11,8 +13,6 @@ services:
     environment:
       - ASSET_DRAWER_PASS=438516720
       - FLASK_SECRET_KEY=changeme_replace_with_random
-    volumes:
-      - ./state.json:/app/state.json:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
       interval: 30s
