@@ -3,6 +3,9 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# 安装 git
+RUN apk add --no-cache git
+
 # 克隆仓库
 RUN git clone https://github.com/Max5en/Star-Office-UI.git . --depth 1
 
