@@ -1,19 +1,3 @@
-# 阶段1: 构建前端
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# 安装 git
-RUN apk add --no-cache git
-
-# 克隆仓库
-RUN git clone https://github.com/Max5en/Star-Office-UI.git . --depth 1
-
-WORKDIR /app/frontend
-
-RUN npm install && npm run build
-
-# 阶段2: Python + Nginx 运行
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -25,13 +9,24 @@ RUN apt-get update && apt-get install -y nginx curl && rm -rf /var/lib/apt/lists
 RUN pip install --no-cache-dir flask flask-cors
 
 # 复制后端文件
-COPY --from=builder /app/backend/app.py /app/backend/
-COPY --from=builder /app/backend/*.py /app/backend/
-COPY --from=builder /app/set_state.py /app/
-COPY --from=builder /app/state.json /app/
-COPY --from=builder /app/runtime-config.sample.json /app/runtime-config.json
-COPY --from=builder /app/assets /app/assets
-COPY --from=builder /app/frontend/dist /app/static/
+COPY backend/app.py /app/backend/
+COPY backend/*.py /app/backend/
+COPY set_state.py /app/
+COPY state.json /app/
+COPY runtime-config.sample.json /app/runtime-config.json
+
+# 复制前端静态文件
+COPY frontend/index.html /app/static/
+COPY frontend/game.js /app/static/
+COPY frontend/layout.js /app/static/
+COPY frontend/vendor /app/static/
+COPY frontend/fonts /app/static/
+COPY frontend/*.webp /app/static/
+COPY frontend/*.png /app/static/
+COPY frontend/*.ico /app/static/ 2>/dev/null || true
+
+# 复制 assets
+COPY assets /app/assets
 
 # 初始化状态文件
 RUN echo '{"state":"idle","detail":"待命中","progress":0}' > /app/state.json && \
