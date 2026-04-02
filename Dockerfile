@@ -31,7 +31,7 @@ COPY assets /app/assets
 RUN echo '{"state":"idle","detail":"待命中","progress":0}' > /app/state.json
 RUN echo '{}' > /app/agents-state.json
 RUN echo '{}' > /app/join-keys.json
-RUN echo "ASSET_DRAWER_PASS=1234" > /app/.env
+RUN echo "ASSET_DRAWER_PASS=438516720" > /app/.env
 
 RUN echo 'server { listen 80; server_name localhost; root /app/frontend; index index.html; location / { try_files $uri $uri/ /index.html; } location /set_state { proxy_pass http://127.0.0.1:19000; } location /status { proxy_pass http://127.0.0.1:19000; } location /agents { proxy_pass http://127.0.0.1:19000; } }' > /etc/nginx/conf.d/star.conf
 
