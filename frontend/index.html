@@ -643,7 +643,7 @@
             background: #4a4f5f;
             border-color: #e94560;
         }
-        /* Star 状态四按钮（不含装修）使用像素精灵皮肤 */
+        /* 菠萝包 状态四按钮（不含装修）使用像素精灵皮肤 */
         #control-bar #btn-state-idle,
         #control-bar #btn-state-writing,
         #control-bar #btn-state-syncing,
@@ -1160,7 +1160,7 @@
         
         <!-- 状态控制栏 -->
         <div id="control-bar">
-            <div id="control-bar-title">Star 状态</div>
+            <div id="control-bar-title">菠萝包 状态</div>
             <div id="control-buttons">
                 <button id="btn-state-idle" onclick="setState('idle','待命')">待命</button>
                 <button id="btn-state-writing" onclick="setState('writing','工作中')">工作</button>
@@ -1293,10 +1293,10 @@
         let uiLang = localStorage.getItem('uiLang') || 'en';
         const I18N = {
             zh: {
-                controlTitle: 'Star 状态',
+                controlTitle: '菠萝包 状态',
                 btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
                 drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
-                authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '默认密码：1234（可随时让我帮你改，建议改成强密码）',
+                authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证', authDefaultPassHint: '',
                 drawerVisibilityTip: '可见性：点击条目右侧眼睛按钮切换该资产显示',
                 hideDrawer: '👁 隐藏侧边栏', showDrawer: '👁 显示侧边栏',
                 assetHide: '隐藏', assetShow: '显示',
